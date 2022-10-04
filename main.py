@@ -1,5 +1,5 @@
 import pygame
-
+import random
 pygame.font.init()
 
 screen_width = 1000
@@ -13,73 +13,119 @@ main_font = 'Engravers MT'
 main_font_size = 30
 
 button_list = []
+ui = []
+
+
+class Text:
+    def __init__(self, text, text_position, id, text_size=main_font_size, text_font=main_font, text_colour=black, show=True):
+        self.id = id
+        self.show = show
+        self.text_string = text
+        self.text_position = text_position
+        self.text_size = text_size
+        self.font = text_font
+        self.text_colour = text_colour
+        self.text = pygame.font.SysFont(self.font, self.text_size).render(self.text_string, True, self.text_colour)
 
 class Rectangle:
-    def __init__(self, position, size, fill_colour=white):
+    def __init__(self, position, size, id, fill_colour=white, show=True):
+        self.id = id
+        self.show = show
         self.rect_position = position
         self.rect_size = size
         self.fill_colour = fill_colour
+        self.update_button()
+
+    def update_button(self):
         self.rect = pygame.Rect(self.rect_position[0], self.rect_position[1], self.rect_size[0], self.rect_size[1])
 
-class Button(Rectangle):
-    def __init__(self, position, size, fill_colour, button_text, text_font=main_font, text_size=main_font_size, text_colour=black, design_details=None, button_text_position=None, id=None):
-        super().__init__(position, size, fill_colour)
-        self.id = id
-        self.button_text = button_text
-        self.button_text_font = pygame.font.SysFont(text_font, text_size)
-        self.button_text = self.button_text_font.render(button_text, True, text_colour)
 
-        if button_text_position is None:
-            self.button_text_position = [(position[0] + (position[0] + size[0]))/2 - self.button_text.get_width()/2, (position[1] + (position[1] + size[1]))/2 - self.button_text.get_height()/2]
+class Button(Rectangle, Text):
+    def __init__(self, position, size, fill_colour, text, button_function=None, text_font=main_font, text_size=main_font_size, text_colour=black, text_position=None, id=None, show=True):
+        Rectangle.__init__(self, position=position, size=size, fill_colour=fill_colour, id=id)
+        Text.__init__(self, text=text, text_position=text_position, text_size=text_size, text_font=text_font, text_colour=text_colour, id=id)
+        self.id = id
+        self.button_function = button_function
+        self.show = show
+        if text_position is None:
+            self.assign_text_position()
+
+    def assign_text_position(self):
+        self.text_position = [(self.rect_position[0] + (self.rect_position[0] + self.rect_size[0]))/2 - self.text.get_width()/2, (self.rect_position[1] + (self.rect_position[1] + self.rect_size[1]))/2 - self.text.get_height()/2]
+
+
+def Show_Internal_Menu():
+    for item in ui:
+        if "internal" in item.id:
+            item.show = True
 
         else:
-            self.button_text_position = button_text_position
-
-        if design_details is not None:
-            for item in design_details:
-                print(item)
+            item.show = False
 
 
-    def function(self):
-        new_rectangle.fill_colour = (255, 0, 0)
-        print(f"{self.id} pressed")
+def Return_To_Main_Menu():
+    for item in ui:
+        if "main menu" in item.id:
+            item.show = True
+
+        else:
+            item.show = False
+def Show_Quit_Menu():
+    print("Display Quit Menu")
+
+def second_function():
+    new_rectangle.show = not new_rectangle.show
+
+    if new_rectangle.show is True:
+        game_quit_button.button_function = fourth_function
+
+    else:
+        game_quit_button.button_function = third_function
+    print("Second function called")
+
+def third_function():
+    some_text.text_position[0] += 10
+    print("Third function called")
+
+def fourth_function():
+    some_text.text_position[0] -= 10
+    print("fourth function called")
 
 
-#modes (splash screen, campaign overview, pre-scenario, scenario, equipment inspection, calibration)
-# #main menu features splashpage and options for settings, start and exit
-# #settings tbc
-# exit exits
-# #start button opens existing campaign overview
-# #campaign overview details campaign targets and progress with option to explore collected data
-# #start again to proceed to next event#load up event
-# #event is pre-defined tile array
-# #set within certain screen bounds, outside bounds reserved for information overlay
-# #user has set of options based on available equipment
-# #user has access to 'deck' to choose appropriate equipment
-# #equipment details imported from text files with set attributes (tbc, but will include tags)
-# #user assigns organisation of equipment
-# #once user presses start, scenario proceeds
-# #based on rate, user can interact with equipment in order
-#
 
-new_rectangle = Rectangle(position=[250, 250], size=[100, 50], fill_colour=black)
+
 
 def draw_window():
     game_window.fill(white)
 
-    for button in button_list:
-        pygame.draw.rect(game_window, button.fill_colour, button.rect)
-        game_window.blit(button.button_text, (button.button_text_position[0], button.button_text_position[1]))
-        pygame.draw.rect(game_window, new_rectangle.fill_colour, new_rectangle.rect)
+    for item in ui:
+
+        if item.show is True:
+            if isinstance(item, Rectangle):
+                try:
+                    pygame.draw.rect(game_window, item.fill_colour, item.rect)
+
+                except:
+                    print("Not rectangle")
+            if isinstance(item, Text):
+                try:
+                    game_window.blit(item.text, (item.text_position[0], item.text_position[1]))
+
+                except:
+                    print("Not text")
 
     pygame.display.update()
 
+
 def process_mouse_click(mouse_position):
-    # if mouse button pressed, find position of mouse press and reset tile selection mode / visibility
     for button in button_list:
-        if mouse_position[0] >= button.rect.bottomleft[0] and mouse_position[1] <= button.rect.bottomleft[1] and mouse_position[0] <= button.rect.topright[0] and mouse_position[1] >= button.rect.topright[1]:
-            print(f"{button.id} pressed")
-            button.function()
+        if mouse_position[0] >= button.rect.bottomleft[0] and \
+                mouse_position[1] <= button.rect.bottomleft[1] and \
+                mouse_position[0] <= button.rect.topright[0] and \
+                mouse_position[1] >= button.rect.topright[1] and \
+                button.show is True:
+
+            button.button_function()
 
 def run_main():
     clock = pygame.time.Clock()
@@ -93,9 +139,20 @@ def run_main():
                 run = False
                 pygame.quit()
 
+            '''
+            if event.type == pygame.MOUSEMOTION:
+                mouse_position = pygame.mouse.get_pos()
 
+                if mouse_position[0] >= game_start_button.rect.bottomleft[0] and \
+                        mouse_position[1] <= game_start_button.rect.bottomleft[1] and \
+                        mouse_position[0] <= game_start_button.rect.topright[0] and \
+                        mouse_position[1] >= game_start_button.rect.topright[1]:
+                    game_start_button.rect_position = [random.randint(0, screen_width), random.randint(0, screen_height)]
+                    game_start_button.update_button()
+                    game_start_button.assign_text_position()
+            '''
 
-            if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 # detect mouse button presses
                 left_mouse_button, middle, right = pygame.mouse.get_pressed()
                 #find mouse position
@@ -103,7 +160,6 @@ def run_main():
 
                 # if left mouse button or arrow key press detected
                 if left_mouse_button:
-                    #print(f"Mouse button down")
                     process_mouse_click(mouse_position)
 
         draw_window()
@@ -111,10 +167,26 @@ def run_main():
 
 
 if __name__ == '__main__':
-    game_start_button = Button(id="start button", position=[50, 50], size=[200, 100], fill_colour=(150, 150, 50),
-                               button_text="Start", text_size=60)
-    game_quit_button = Button(id="quit button", position=[50, 200], size=[200, 100], fill_colour=(150, 150, 50),
-                               button_text="Quit", text_size=60)
+
+    game_start_button = Button(id="main menu start button", position=[50, 50], size=[200, 100], fill_colour=(150, 150, 50),
+                               text="Start", text_size=60, button_function=Show_Internal_Menu)
+    game_quit_button = Button(id="main menu quit button", position=[50, 200], size=[200, 100], fill_colour=(150, 150, 50),
+                               text="Quit", text_size=60, button_function=Show_Quit_Menu)
+    new_rectangle = Rectangle(position=[250, 250], size=[100, 50], fill_colour=black, show=False, id="internal menu")
+
+    functions = [second_function, second_function, Return_To_Main_Menu]
+    for i in range(3):
+
+        new_button = Button(id=f"internal menu button {i}", position=[screen_width-110, 60*i], size=[100, 50], fill_colour=black, text=f"Button {i}", text_colour=white, button_function=functions[i], show=False)
+        ui.append(new_button)
+        button_list.append(new_button)
+
+    some_text = Text(text="Some sample text", text_position=[500, 250], id="main menu")
+
+    ui.append(game_start_button)
+    ui.append(game_quit_button)
+    ui.append(new_rectangle)
+    ui.append(some_text)
 
     button_list.append(game_start_button)
     button_list.append(game_quit_button)
